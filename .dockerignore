@@ -1,0 +1,13 @@
+**
+!backend/
+!backend/app/
+!backend/app/**
+!backend/migrate.py
+!backend/requirements.txt
+!backend/Dockerfile
+!database/
+!database/migrations/
+!database/migrations/**
+!contracts/
+!contracts/**
+**/__pycache__/

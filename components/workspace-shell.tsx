@@ -2,10 +2,10 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ArrowUpRight, BookOpen, ChevronDown, ChevronRight, FileSpreadsheet, FolderOpen, History, LayoutGrid, LifeBuoy, Menu, Settings2, ShieldCheck, X, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 
 const navigation = [
@@ -21,11 +21,15 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const [helpOpen, setHelpOpen] = useState(false)
   const current = pathname === "/schedules/new" ? "New schedule" : [...navigation, { href: "/settings", label: "Settings" }, { href: "/guide", label: "Workspace guide" }].find(item => item.href === pathname)?.label ?? "Workspace"
 
-  return (
-    <div className="min-h-screen">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-background focus:p-3">Skip to content</a>
-      {menuOpen && <button className="fixed inset-0 z-30 bg-foreground/30 lg:hidden" aria-label="Close navigation" onClick={() => setMenuOpen(false)} />}
-      <aside className={cn("workspace-sidebar fixed inset-y-0 left-0 z-40 flex w-56 flex-col bg-sidebar text-sidebar-foreground transition-transform lg:translate-x-0", menuOpen ? "translate-x-0" : "-translate-x-full")}>
+  const menuButton = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1024px)")
+    const closeOnDesktop = () => { if (desktop.matches) setMenuOpen(false) }
+    desktop.addEventListener("change", closeOnDesktop)
+    return () => desktop.removeEventListener("change", closeOnDesktop)
+  }, [])
+
+  const sidebar = <div className="flex min-h-full flex-col [&>*]:shrink-0">
         <Link href="/" className="flex h-[76px] items-center gap-3 px-6" onClick={() => setMenuOpen(false)}>
           <span className="brand-mark flex size-8 items-center justify-center rounded-lg"><Zap className="size-5" fill="currentColor" strokeWidth={1.5} /></span>
           <span className="text-lg font-semibold tracking-[-0.7px]">electric<span className="text-sidebar-foreground/45">schedule</span><span className="text-primary">.</span></span>
@@ -47,7 +51,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
             <ShieldCheck className="mb-2.5 size-5 text-primary" strokeWidth={1.5} />
             <p className="text-xs font-medium">Your template. Untouched.</p>
             <p className="mt-1.5 text-[11px] leading-relaxed text-sidebar-foreground/45">Every schedule starts from a copy. Your originals stay yours.</p>
-            <Link href="/guide#source-safety" className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-medium text-sidebar-foreground/75">Our safety principles <ArrowUpRight className="size-3" /></Link>
+            <Link href="/guide#source-safety" onClick={() => setMenuOpen(false)} className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-medium text-sidebar-foreground/75">Our safety principles <ArrowUpRight className="size-3" /></Link>
           </div>
           <nav className="flex flex-col gap-1" aria-label="Workspace resources">
             <Link href="/settings" onClick={() => setMenuOpen(false)} className={cn("sidebar-link flex items-center gap-3 rounded-md px-3 py-2.5 text-xs", pathname === "/settings" && "is-active")}><Settings2 className="size-4" strokeWidth={1.6} />Settings</Link>
@@ -55,10 +59,23 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
           </nav>
           <div className="flex items-center gap-3 border-t border-sidebar-border px-2 pt-4"><span className="flex size-8 items-center justify-center rounded-full bg-sidebar-accent text-xs font-medium">ES</span><div className="flex flex-col gap-0.5"><span className="text-xs">Electric Schedule</span><span className="text-[10px] text-sidebar-foreground/40">Development workspace</span></div></div>
         </div>
-      </aside>
+      </div>
+
+  return (
+    <div className="min-h-screen">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-background focus:p-3">Skip to content</a>
+      <aside className="workspace-sidebar fixed inset-y-0 left-0 hidden w-56 overflow-y-auto bg-sidebar text-sidebar-foreground lg:block">{sidebar}</aside>
+      <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
+        <DialogContent id="mobile-navigation" finalFocus={menuButton} showCloseButton={false} className="workspace-sidebar inset-y-0 left-0 flex h-dvh w-56 max-w-full translate-x-0 translate-y-0 flex-col gap-0 overflow-y-auto rounded-none bg-sidebar p-0 text-sidebar-foreground sm:max-w-56">
+          <DialogTitle className="sr-only">Workspace navigation</DialogTitle>
+          <DialogDescription className="sr-only">Engineering workspace pages and resources.</DialogDescription>
+          <DialogClose render={<Button variant="ghost" size="sm" className="mx-4 mt-3 self-end" />}><X data-icon="inline-start" />Close navigation</DialogClose>
+          {sidebar}
+        </DialogContent>
+      </Dialog>
       <div className="lg:ml-56">
         <header className="flex h-16 items-center justify-between border-b border-border bg-card px-5 md:px-8">
-          <div className="flex items-center gap-3 text-xs"><Button size="icon-sm" variant="ghost" onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden" aria-label="Open navigation">{menuOpen ? <X /> : <Menu />}</Button><span className="hidden text-muted-foreground sm:block">Workspace</span><ChevronRight className="hidden size-3 text-muted-foreground/60 sm:block" /><span className="font-medium">{current}</span></div>
+          <div className="flex items-center gap-3 text-xs"><Button ref={menuButton} size="icon-sm" variant="ghost" onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden" aria-label="Open navigation" aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-haspopup="dialog">{menuOpen ? <X /> : <Menu />}</Button><span className="hidden text-muted-foreground sm:block">Workspace</span><ChevronRight className="hidden size-3 text-muted-foreground/60 sm:block" /><span className="font-medium">{current}</span></div>
           <div className="flex items-center gap-5"><Link href="/guide" className="hidden items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground sm:flex"><BookOpen className="size-3.5" />Quick start guide</Link><span className="header-environment inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium"><span className="size-1.5 rounded-full bg-current" />Development</span></div>
         </header>
         <main id="main-content" className="mx-auto w-full max-w-[1440px] px-5 py-7 md:px-8 md:py-8">{children}</main>

@@ -1,0 +1,8 @@
+{
+  "contractVersion": "1.0.0",
+  "phase": 1,
+  "processingEnabled": false,
+  "migrationVersion": "001_foundation",
+  "fileLimits": { "drawing": 52428800, "template": 20971520 },
+  "processingStages": ["UPLOAD", "VALIDATING_FILES", "READING_DRAWING", "EXTRACTING_TEXT", "RUNNING_OCR", "NORMALIZING_ENGINEERING_DATA", "ANALYZING_EXCEL_TEMPLATE", "DETECTING_FORMULAS", "MAPPING_FIELDS", "AI_REVIEW", "WAITING_FOR_USER", "GENERATING_EXCEL", "VALIDATING_EXCEL", "COMPLETED", "FAILED"]
+}
